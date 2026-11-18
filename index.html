@@ -618,7 +618,7 @@ function renderResults(r){
     if (st) {
       const tight = st.close.margin < 0.05 ? ' (tight, but the prediction is exact)' : '';
       stopperHTML = `
-        <br>Stopper block (closest after the landing): <b>${blockFmt(st.close, yApprox)}</b> <span class="error-text">margin ${st.close.margin.toFixed(3)} blocks${tight}</span>`;
+        <br>Stopper block: <b>${blockFmt(st.close, yApprox)}</b> <span class="error-text">margin ${st.close.margin.toFixed(3)} blocks${tight}</span>`;
     }
   }
 
