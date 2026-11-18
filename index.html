@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>360&deg; FTL TNT Cannon Calculator</title>
+<link rel="icon" href="https://static.wikia.nocookie.net/minecraft_gamepedia/images/f/f6/Ender_Pearl_JE3_BE2.png/revision/latest/thumbnail/width/360/height/360?cb=20200512195721" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  :root{
+    --bg: #121212;
+    --panel: #1f1f1f;
+    --panel-2: #171717;
+    --line: #333333;
+    --ink: #ffffff;
+    --ink-dim: #aaaaaa;
+    --ink-faint: #979797;
+    --blue: #3b82f6;
+    --blue-bright: #60a5fa;
+    --amber: #f59e0b;
+    --red: #ef4444;
+  }
+  *{ box-sizing: border-box; }
+  body{
+    margin:0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+  }
+  .wrap{ max-width: 880px; margin: 0 auto; padding: 0 20px 60px; }
+
+  .header-container{
+    background: var(--panel);
+    padding: 28px 20px;
+    margin-bottom: 28px;
+  }
+  .header-inner{ max-width: 880px; margin: 0 auto; padding: 0 20px; }
+  h1{ font-size: 28px; font-weight: 800; margin: 0 0 4px; }
+  .subtitle{ color: var(--ink-dim); font-size: 14px; margin: 0; }
+
+  .grid2{ display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 640px){ .grid2{ grid-template-columns: 1fr; } }
+
+  .card{
+    background: var(--panel);
+    border-radius: 0.75rem;
+    padding: 18px 20px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    transition: box-shadow 0.2s;
+  }
+  .card:hover{ box-shadow: 0 6px 14px rgba(0,0,0,0.3); }
+
+  .panel-label{
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    color: var(--blue-bright);
+    margin: 0 0 14px;
+  }
+
+  .coord-row{ display:flex; gap: 10px; }
+  .field{ flex:1; }
+  label{ display:block; font-size: 12px; color: var(--ink-faint); margin-bottom: 6px; }
+  input[type="number"]{
+    width: 100%;
+    background: var(--panel-2);
+    border: 1px solid var(--line);
+    color: var(--ink);
+    font-size: 15px;
+    padding: 10px 12px;
+    border-radius: 0.5rem;
+    outline: none;
+  }
+  input[type="number"]:focus{ border-color: var(--blue); }
+  .hint{ font-size: 12px; color: var(--ink-faint); margin: 6px 0 0; line-height: 1.4; }
+
+  button.solve{
+    margin-top: 18px;
+    width: 100%;
+    background: var(--blue);
+    color: #fff;
+    border: none;
+    font-weight: 600;
+    font-size: 14px;
+    letter-spacing: 0.3px;
+    padding: 13px;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    transition: background 0.15s ease;
+  }
+  button.solve:hover{ background: var(--blue-bright); }
+
+  .results{ margin-top: 20px; display: flex; flex-direction: column; gap: 20px; }
+  .hidden{ display:none !important; }
+
+  .load-times{ display:grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 2px; }
+  .load-card{
+    background: var(--panel-2);
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--blue);
+    border-radius: 0.5rem;
+    padding: 14px 16px;
+  }
+  .load-card .axis{ font-size: 12px; color: var(--blue-bright); letter-spacing: 0.5px; text-transform: uppercase; font-weight: 600; }
+  .load-card .time{ font-size: 28px; font-weight: 800; margin-top: 4px; }
+  .load-card .time span{ font-size: 14px; color: var(--ink-faint); font-weight: 400; }
+  .load-card .stacks{ color: var(--ink-faint); font-size: 13px; margin-top: 2px; }
+
+  .landing-details {
+    margin-top: 16px;
+    padding-top: 14px;
+    border-top: 1px solid var(--line);
+    font-size: 14px;
+    color: var(--ink-dim);
+    line-height: 1.6;
+  }
+  .landing-details b { color: var(--ink); }
+  .error-text { margin-top: 4px; font-size: 12.5px; color: var(--ink-faint); }
+  .warn-text { margin-top: 8px; font-size: 12.5px; color: var(--amber); line-height: 1.5; }
+
+  .toggle-row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid var(--line);
+  }
+  .toggle-label{ font-size: 13px; color: var(--ink-dim); line-height: 1.4; }
+  .toggle-label b{ color: var(--ink); font-weight: 600; }
+
+  .version-group{ display: flex; gap: 8px; margin-top: 4px; }
+  .version-btn{
+    flex: 1;
+    background: var(--panel-2); border: 1px solid var(--line);
+    color: var(--ink-dim); font-size: 13px; font-weight: 600;
+    padding: 9px 8px; border-radius: 0.5rem; cursor: pointer;
+    transition: all 0.12s ease; text-align: center; user-select: none;
+  }
+  .version-btn:hover{ border-color: var(--blue); color: var(--ink); }
+  .version-btn.active{ background: var(--blue); border-color: var(--blue); color: #fff; }
+
+  .facing-banner{
+    background: var(--panel-2); border: 1px solid var(--line); border-left: 3px solid var(--blue);
+    border-radius: 0.5rem; padding: 14px 16px; margin-bottom: 14px;
+  }
+  .facing-banner .flabel{ font-size: 12px; color: var(--blue-bright); letter-spacing: 0.5px; text-transform: uppercase; font-weight: 600; }
+  .facing-banner .fvalue{ font-size: 24px; font-weight: 800; margin-top: 4px; }
+  .facing-banner .fvalue span{ font-size: 14px; color: var(--ink-faint); font-weight: 400; }
+
+  .rom{
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 15px; color: var(--ink); letter-spacing: 1px; word-break: break-all;
+    background: var(--panel-2); border: 1px solid var(--line); border-radius: 0.5rem;
+    padding: 10px 12px; margin: 6px 0 14px;
+  }
+  .rom small{ display:block; font-family: 'Inter', sans-serif; letter-spacing: 0; font-size: 11.5px; color: var(--ink-faint); margin-bottom: 4px; }
+
+  details.rank{ margin-top: 16px; border-top: 1px solid var(--line); padding-top: 12px; }
+  details.rank summary{ cursor: pointer; font-size: 12px; color: var(--blue-bright); letter-spacing: 0.5px; text-transform: uppercase; font-weight: 600; }
+  .rank-scroll{ overflow-x: auto; margin-top: 10px; }
+  table.rank-table{ width: 100%; border-collapse: collapse; font-size: 12.5px; color: var(--ink-dim); font-variant-numeric: tabular-nums; }
+  .rank-table th{ text-align: left; font-weight: 600; color: var(--ink-faint); padding: 6px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+  .rank-table td{ padding: 6px 10px; border-bottom: 1px solid var(--panel-2); white-space: nowrap; }
+  .rank-table tr.top td{ color: var(--ink); font-weight: 600; }
+  .rank-table tr.out td{ color: var(--ink-faint); opacity: 0.7; }
+  .rank-table tr.clickable{ cursor: pointer; }
+  .rank-table tr.clickable:hover td{ background: var(--panel-2); }
+  .rank-table tr.clickable.open td{ background: var(--panel-2); }
+  .rank-table tr.clickable td:first-child::before{ content: "\25B8"; display: inline-block; width: 1em; color: var(--ink-faint); }
+  .rank-table tr.clickable.open td:first-child::before{ content: "\25BE"; }
+  .rank-table tr.detail td{ white-space: normal; background: var(--panel-2); padding: 10px 14px 14px; color: var(--ink-dim); line-height: 1.6; }
+  .rank-table tr.detail .rom{ margin: 6px 0 8px; background: var(--bg); }
+  .pins-left  { color: #ff5c5c; }   /* left pins: red   */
+  .pins-right { color: #4da6ff; }   /* right pins: blue */
+  .pins-axis  { color: #a6ff3a; }   /* axis pins: lime  */
+</style>
+</head>
+<body>
+
+<div class="header-container">
+  <div class="header-inner">
+    <h1>360&deg; FTL TNT Cannon Calculator</h1>
+    <p class="subtitle">Enter where the pearl starts and where you want to land. It solves the axis selection, the TNT on the left and right dupers (1 TNT steps, 1929 per side at most), and the ROM pins for the selector panel.</p>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="grid2">
+    <div class="card">
+      <p class="panel-label">Cannon origin</p>
+      <div class="coord-row">
+        <div class="field">
+          <label>X</label>
+          <input type="number" id="originX" placeholder="e.g. 0">
+        </div>
+        <div class="field">
+          <label>Z</label>
+          <input type="number" id="originZ" placeholder="e.g. 0">
+        </div>
+      </div>
+      <div class="coord-row" style="margin-top: 10px;">
+        <div class="field">
+          <label>Floor Y (Optional)</label>
+          <input type="number" id="originY" placeholder="e.g. 128">
+        </div>
+      </div>
+      <div style="margin-top:14px;">
+        <label>Landing type</label>
+        <div class="version-group" id="modeGroup">
+          <div class="version-btn active" data-mode="stopper" onclick="selectMode(this)">Stopper block</div>
+          <div class="version-btn" data-mode="full" onclick="selectMode(this)">Full trajectory</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <p class="panel-label">Target coordinate</p>
+      <div class="coord-row">
+        <div class="field">
+          <label>X</label>
+          <input type="number" id="targetX" placeholder="e.g. 3821">
+        </div>
+        <div class="field">
+          <label>Z</label>
+          <input type="number" id="targetZ" placeholder="e.g. 545">
+        </div>
+      </div>
+      <div class="coord-row hidden" id="targetYRow" style="margin-top: 10px;">
+        <div class="field">
+          <label>Target Y (Optional)</label>
+          <input type="number" id="targetY" placeholder="e.g. 128">
+        </div>
+      </div>
+      <div style="margin-top:14px;">
+        <label>Priority</label>
+        <div class="version-group" id="prioGroup">
+          <div class="version-btn active" data-prio="time" onclick="selectPrio(this)">Min flight time (more TNT)</div>
+          <div class="version-btn" data-prio="tnt" onclick="selectPrio(this)">Min TNT count</div>
+        </div>
+      </div>
+      <div style="margin-top:14px;">
+        <label>Accept offsets up to (blocks)</label>
+        <input type="number" id="maxOffset" placeholder="3" min="0">
+        <p class="hint">Among the landings this close to the target, the priority above picks the order.</p>
+      </div>
+      <div style="margin-top:14px;">
+        <label>Max TNT (total)</label>
+        <input type="number" id="maxTNT" placeholder="3858" min="1" max="3858">
+        <p class="hint">No configuration will use more TNT than this. The design itself stops at 3858 (1929 per side).</p>
+      </div>
+    </div>
+  </div>
+
+  <button class="solve" onclick="solve()">Solve</button>
+
+  <div class="results" id="results"></div>
+</div>
+
+<script>
+const TNT_PUSH = 0.5948986108695831;
+const BASE_Y_VEL = 0.056500683186671;
+const Y_VEL_PER_TNT = 1.98977202354e-8;
+const LAUNCH_Y_ABOVE_FLOOR = 56.34875002483244;
+
+const GRAVITY = 0.03;
+const DRAG = Math.fround(0.99);
+
+const STEP = 1;
+const MAX_PER_SIDE = 1929;
+const KLIM = 400;
+const MIN_MARGIN = 0.01;
+const MIN_INSIDE = 0.2;
+
+const DIR = {
+  NE: { x:  1, z: -1 },
+  SE: { x:  1, z:  1 },
+  SW: { x: -1, z:  1 },
+  NW: { x: -1, z: -1 }
+};
+
+const SELECTIONS = [
+  { name: 'NE NW', left: 'NE', right: 'NW', sector: 'North', pref: 3 },
+  { name: 'NW SW', left: 'SW', right: 'NW', sector: 'West',  pref: 2 },
+  { name: 'NE SE', left: 'SE', right: 'NE', sector: 'East',  pref: 1 },
+  { name: 'SE SW', left: 'SE', right: 'SW', sector: 'South', pref: 0 }
+];
+
+const FLOOR_Y_WARNING = "Target Y is filled in, but Floor Y is empty.\n\nEnter a Floor Y (or clear Target Y) to solve.";
+
+const S = new Float64Array(KLIM + 3);
+const T = new Float64Array(KLIM + 3);
+(function(){
+  let p = 1, s = 0, t = 0;
+  for (let k = 1; k <= KLIM + 2; k++) { p *= DRAG; s += p; S[k] = s; t += s; T[k] = t; }
+})();
+
+function yAt(K, vy0, launchY){
+  return launchY + vy0 * S[K] - GRAVITY * T[K];
+}
+
+function landTick(n, launchY, planeY, cache){
+  const key = n;
+  if (cache && cache.has(key)) return cache.get(key);
+  let res = null;
+  if (launchY > planeY) {
+    const vy0 = BASE_Y_VEL + n * Y_VEL_PER_TNT;
+    for (let K = 1; K < KLIM; K++) {
+      if (yAt(K, vy0, launchY) > planeY && yAt(K + 1, vy0, launchY) <= planeY) { res = K; break; }
+    }
+  }
+  if (cache) cache.set(key, res);
+  return res;
+}
+
+const PIN_ORDER = [
+  80, 160, 240, 320, 400,
+  10, 20, 30, 40, 50, 60, 70, 80,
+  240, 480,
+  480, 960,
+  1, 2, 3, 4, 5, 6, 7, 8, 9
+];
+const PIN_GROUP = [0,0,0,0,0, 1,1,1,1,1,1,1,1, 2,2, 3,3, 4,4,4,4,4,4,4,4,4];
+
+const BASE_PINS = (function(){
+  const t = { 0: [] };
+  [80, 160, 240, 320, 400].forEach(b => { t[b] = [[b, 0]]; });
+  t[480] = [[240, 2], [240, 0]];
+  t[560] = [[480, 2], [80, 0]];
+  t[640] = [[480, 2], [160, 0]];
+  t[720] = [[480, 2], [240, 0]];
+  t[800] = [[480, 2], [320, 0]];
+  t[880] = [[480, 3], [240, 2], [160, 0]];
+  t[960] = [[480, 3], [480, 2]];
+  [80, 160, 240, 320, 400].forEach((b, i) => { t[1040 + 80 * i] = [[480, 3], [480, 2], [b, 0]]; });
+  t[1440] = [[960, 3], [480, 2]];
+  [80, 160, 240, 320, 400].forEach((b, i) => { t[1520 + 80 * i] = [[960, 3], [480, 2], [b, 0]]; });
+  return t;
+})();
+
+function encodeSide(v){
+  const fine = v % 10, main = v - fine;
+  const on = new Array(PIN_ORDER.length).fill(0);
+  const use = (val, group) => { on[PIN_ORDER.findIndex((pv, i) => pv === val && PIN_GROUP[i] === group)] = 1; };
+  const parts = { first: 0, second: 0, third: 0, fine };
+  if (main > 0) {
+    let base = 80 * Math.floor(main / 80), rem = main - base;
+    if (rem === 0 && base > 1840) { base = 1840; rem = 80; }
+    if (rem > 0) { use(rem, 1); parts.first += rem; }
+    for (const [val, group] of BASE_PINS[base]) {
+      use(val, group);
+      if (group === 0) parts.first += val; else if (group === 2) parts.second += val; else parts.third += val;
+    }
+  }
+  if (fine > 0) use(fine, 4);
+  return { on, bits: on.join(''), parts };
+}
+
+function sideBits(v){ return encodeSide(v).bits; }
+
+function romString(selIndex, L, R){
+  const axis = [0,1,2,3].map(i => i === selIndex ? '1' : '0').join('');
+  return { left: sideBits(L), right: sideBits(R), axis };
+}
+
+function makeCandidate(selIndex, L, R, K, ctx){
+  const sel = SELECTIONS[selIndex], dl = DIR[sel.left], dr = DIR[sel.right];
+  const n = L + R;
+  const h = TNT_PUSH * S[K], h2 = TNT_PUSH * S[K + 1];
+  const mx = L * dl.x + R * dr.x, mz = L * dl.z + R * dr.z;
+  const vy0 = BASE_Y_VEL + n * Y_VEL_PER_TNT;
+  const x = ctx.ox + h * mx, z = ctx.oz + h * mz;
+  return {
+    selIndex, L, R, n, K,
+    x, y: yAt(K, vy0, ctx.launchY), z,
+    err: Math.hypot(x - ctx.tx, z - ctx.tz),
+    next: { x: ctx.ox + h2 * mx, y: yAt(K + 1, vy0, ctx.launchY), z: ctx.oz + h2 * mz }
+  };
+}
+
+function nearSteps(c){
+  const r = Math.round(c / STEP), out = [];
+  for (let i = r - 2; i <= r + 2; i++) { const k = Math.min(MAX_PER_SIDE / STEP, Math.max(0, i)); if (!out.includes(k)) out.push(k); }
+  return out;
+}
+
+function limitPair(Lc, Rc, maxTNT){
+  const over = Lc > MAX_PER_SIDE + STEP / 2 || Rc > MAX_PER_SIDE + STEP / 2 || Lc + Rc > maxTNT + STEP / 2;
+  let l = Math.min(MAX_PER_SIDE, Math.max(0, Lc)), r = Math.min(MAX_PER_SIDE, Math.max(0, Rc));
+  if (l + r > maxTNT) { const f = maxTNT / (l + r); l *= f; r *= f; }
+  return { l, r, over };
+}
+
+function dedupe(list){
+  const seen = new Set(), out = [];
+  list = list.slice().sort((a, b) => SELECTIONS[a.selIndex].pref - SELECTIONS[b.selIndex].pref);
+  for (const c of list) {
+    const sel = SELECTIONS[c.selIndex], cnt = { NE:0, SE:0, SW:0, NW:0 };
+    cnt[sel.left] += c.L; cnt[sel.right] += c.R;
+    const key = c.K + ':' + cnt.NE + ',' + cnt.SE + ',' + cnt.SW + ',' + cnt.NW;
+    if (!seen.has(key)) { seen.add(key); out.push(c); }
+  }
+  return out;
+}
+
+function stopperCandidates(ctx){
+  const out = [], dx = ctx.tx - ctx.ox, dz = ctx.tz - ctx.oz, maxTNT = ctx.maxTNT || 2 * MAX_PER_SIDE;
+  SELECTIONS.forEach((sel, si) => {
+    const dl = DIR[sel.left], dr = DIR[sel.right];
+    for (let K = 1; K < KLIM; K++) {
+      const h = TNT_PUSH * S[K];
+      const Lc = (dx * dl.x + dz * dl.z) / (2 * h);
+      const Rc = (dx * dr.x + dz * dr.z) / (2 * h);
+      if (Lc < -STEP / 2 || Rc < -STEP / 2) continue;
+      const lim = limitPair(Lc, Rc, maxTNT);
+      for (const iL of nearSteps(lim.l)) for (const iR of nearSteps(lim.r)) {
+        const L = iL * STEP, R = iR * STEP;
+        if (L + R <= 0 || L + R > maxTNT) continue;
+        const c = makeCandidate(si, L, R, K, ctx);
+        if (!(c.next.y > ctx.planeY)) continue;
+        c.over = lim.over;
+        out.push(c);
+      }
+    }
+  });
+  return dedupe(out);
+}
+
+function fullCandidates(ctx){
+  const out = [], cache = new Map(), dx = ctx.tx - ctx.ox, dz = ctx.tz - ctx.oz, maxTNT = ctx.maxTNT || 2 * MAX_PER_SIDE;
+  SELECTIONS.forEach((sel, si) => {
+    const dl = DIR[sel.left], dr = DIR[sel.right];
+    let K = landTick(MAX_PER_SIDE, ctx.launchY, ctx.planeY, cache);
+    if (K === null) return;
+    let Lc = 0, Rc = 0;
+    for (let pass = 0; pass < 2; pass++) {
+      const h = TNT_PUSH * S[K];
+      Lc = (dx * dl.x + dz * dl.z) / (2 * h);
+      Rc = (dx * dr.x + dz * dr.z) / (2 * h);
+      const k2 = landTick(Math.max(STEP, Math.round(Math.max(0, Lc) + Math.max(0, Rc))), ctx.launchY, ctx.planeY, cache);
+      if (k2 !== null) K = k2;
+    }
+    if (Lc < -STEP / 2 || Rc < -STEP / 2) return;
+    const lim = limitPair(Lc, Rc, maxTNT);
+    for (const iL of nearSteps(lim.l)) for (const iR of nearSteps(lim.r)) {
+      const L = iL * STEP, R = iR * STEP;
+      if (L + R <= 0 || L + R > maxTNT) continue;
+      const Kc = landTick(L + R, ctx.launchY, ctx.planeY, cache);
+      if (Kc === null) continue;
+      const c = makeCandidate(si, L, R, Kc, ctx);
+      c.over = lim.over;
+      out.push(c);
+    }
+  });
+  return dedupe(out);
+}
+
+function rankCandidates(cands, prio, maxOffset){
+  if (!cands.length) return { list: [], bestErr: null, tol: maxOffset, accepted: 0 };
+  const byErr = cands.slice().sort((a, b) => a.err - b.err || a.n - b.n || a.K - b.K);
+  const bestErr = byErr[0].err;
+  const tol = Math.max(maxOffset, bestErr);
+  const acc = byErr.filter(c => c.err <= tol + 1e-9);
+  const rest = byErr.filter(c => c.err > tol + 1e-9);
+  const cmp = prio === 'time'
+    ? (a, b) => a.K - b.K || a.err - b.err || a.n - b.n
+    : (a, b) => a.n - b.n || a.err - b.err || a.K - b.K;
+  acc.sort(cmp);
+  acc.forEach(c => c.inTol = true);
+  const list = acc.concat(rest).slice(0, 10);
+  return { list, bestErr, tol, accepted: acc.length };
+}
+
+function pathCells(p, q){
+  const P = [p.x, p.y, p.z], D3 = [q.x - p.x, q.y - p.y, q.z - p.z];
+  const len = Math.hypot(D3[0], D3[1], D3[2]);
+  const cell = P.map(Math.floor), step = D3.map(Math.sign), tMax = [0,0,0], tDelta = [0,0,0];
+  for (let i = 0; i < 3; i++) {
+    if (D3[i] === 0) { tMax[i] = Infinity; tDelta[i] = Infinity; continue; }
+    const nextB = step[i] > 0 ? cell[i] + 1 : cell[i];
+    tMax[i] = (nextB - P[i]) / D3[i];
+    tDelta[i] = Math.abs(1 / D3[i]);
+  }
+  const cells = [];
+  for (let guard = 0; guard < 100000; guard++) {
+    let i = 0;
+    if (tMax[1] < tMax[i]) i = 1;
+    if (tMax[2] < tMax[i]) i = 2;
+    if (tMax[i] > 1) break;
+    cell[i] += step[i];
+    cells.push({ x: cell[0], y: cell[1], z: cell[2], margin: tMax[i] * len });
+    tMax[i] += tDelta[i];
+  }
+  return cells;
+}
+
+function stopperInfo(c){
+  const len = Math.hypot(c.next.x - c.x, c.next.y - c.y, c.next.z - c.z);
+  const cells = pathCells({ x: c.x, y: c.y, z: c.z }, c.next);
+  if (!cells.length) return null;
+  cells.forEach((k, i) => { k.inside = (i + 1 < cells.length ? cells[i + 1].margin : len) - k.margin; });
+  const solid = cells.filter(k => k.inside >= MIN_INSIDE);
+  const safe = solid.length ? solid[solid.length - 1] : cells[cells.length - 1];
+  const close = cells.find(k => k.margin >= MIN_MARGIN && k.inside >= MIN_INSIDE) || safe;
+  return { safe, close };
+}
+
+let mode = 'stopper';
+let prio = 'time';
+
+function selectMode(el){
+  document.querySelectorAll('#modeGroup .version-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  mode = el.dataset.mode;
+  document.getElementById('targetYRow').classList.toggle('hidden', mode !== 'full');
+}
+
+function selectPrio(el){
+  document.querySelectorAll('#prioGroup .version-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  prio = el.dataset.prio;
+}
+
+function val(id){ return document.getElementById(id).value; }
+function num(id){ return parseFloat(val(id)) || 0; }
+
+function yFmt(y, approx){ return (approx ? '~' : '') + y.toFixed(3); }
+function posFmt(p, approx){ return `${p.x.toFixed(3)}, ${yFmt(p.y, approx)}, ${p.z.toFixed(3)}`; }
+function blockFmt(b, approx){ return `${b.x}, ${approx ? '~' : ''}${b.y}, ${b.z}`; }
+function pinsHTML(rom){
+  return `<span class="pins-left">${rom.left}</span> <span class="pins-right">${rom.right}</span> <span class="pins-axis">${rom.axis}</span>`;
+}
+
+function arrays(v){ const p = encodeSide(v).parts; return `1st ${p.first} &middot; 2nd ${p.second} &middot; 3rd/4th ${p.third} &middot; fine ${p.fine}`; }
+
+function solve(){
+  const full = mode === 'full';
+  const oYv = val('originY'), tYv = val('targetY');
+  if (full && tYv !== "" && oYv === "") {
+    alert(FLOOR_Y_WARNING);
+    document.getElementById('originY').focus();
+    return;
+  }
+  const ox = num('originX'), oz = num('originZ'), tx = num('targetX'), tz = num('targetZ');
+  const oY = oYv === "" ? 0 : parseFloat(oYv);
+  const planeY = full ? (tYv === "" ? oY : parseFloat(tYv)) : oY;
+  const launchY = oY + LAUNCH_Y_ABOVE_FLOOR;
+  const yApprox = oYv === "" && (!full || tYv === "");
+  let maxOffset = parseFloat(val('maxOffset'));
+  if (!(maxOffset >= 0)) maxOffset = 3;
+  let maxTNT = parseFloat(val('maxTNT'));
+  if (!(maxTNT >= 1)) maxTNT = 2 * MAX_PER_SIDE;
+  maxTNT = Math.min(2 * MAX_PER_SIDE, Math.floor(maxTNT));
+
+  const ctx = { ox, oz, tx, tz, launchY, planeY, maxTNT };
+  if (tx === ox && tz === oz) { renderResults({ full, rank: { list: [] }, yApprox, maxOffset, maxTNT, planeY, launchY, same: true }); return; }
+  const cands = full ? fullCandidates(ctx) : stopperCandidates(ctx);
+  const rank = rankCandidates(cands, prio, maxOffset);
+  renderResults({ full, rank, yApprox, maxOffset, maxTNT, planeY, launchY });
+}
+
+function toggleRank(i){
+  const row = document.getElementById('rank-row-' + i), det = document.getElementById('rank-detail-' + i);
+  if (!row || !det) return;
+  det.classList.toggle('hidden');
+  row.classList.toggle('open');
+}
+
+function rankHTML(rank, full, yApprox){
+  const cols = full ? 10 : 11;
+  const rows = rank.list.map((c, i) => {
+    const sel = SELECTIONS[c.selIndex];
+    const st = full ? null : stopperInfo(c);
+    const rom = romString(c.selIndex, c.L, c.R);
+    return `<tr class="clickable ${i === 0 ? 'top' : (c.inTol ? '' : 'out')}" id="rank-row-${i}" onclick="toggleRank(${i})" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleRank(${i});}" title="Click to show the encoding">
+        <td>${i + 1}</td><td>${sel.name}</td><td>${c.L}</td><td>${c.R}</td><td>${c.n}</td><td>${c.K}</td>
+        <td>${c.x.toFixed(3)}</td><td>${yFmt(c.y, yApprox)}</td><td>${c.z.toFixed(3)}</td><td>${c.err.toFixed(3)}</td>
+        ${full ? '' : `<td>${st ? blockFmt(st.close, yApprox) : '-'}</td>`}</tr>
+      <tr class="detail hidden" id="rank-detail-${i}"><td colspan="${cols}">
+        Axis selection <b style="color:var(--ink);">${sel.name}</b> &middot; left duper pushes ${sel.left}, right duper pushes ${sel.right}
+        <div class="rom">${pinsHTML(rom)}</div>
+        Left ${c.L} TNT (${arrays(c.L)}) &middot; Right ${c.R} TNT (${arrays(c.R)})
+      </td></tr>`;
+  }).join('');
+  const note = rank.accepted < rank.list.length ? ' &middot; dimmed rows are outside the accepted offset' : '';
+  return `<details class="rank" open>
+      <summary>Closest ${rank.list.length} configurations &middot; click a row to show its encoding${note}</summary>
+      <div class="rank-scroll"><table class="rank-table">
+        <thead><tr><th>#</th><th>Axis</th><th>Left TNT</th><th>Right TNT</th><th>Total</th><th>Ticks</th><th>X</th><th>Y</th><th>Z</th><th>Offset</th>${full ? '' : '<th>Stopper block (closest)</th>'}</tr></thead>
+        <tbody>${rows}</tbody>
+      </table></div>
+    </details>`;
+}
+
+function renderResults(r){
+  const out = document.getElementById('results');
+  const { rank, full, yApprox } = r;
+  if (!rank.list.length) {
+    out.innerHTML = `<div class="card"><p class="panel-label">No solution</p>
+      <div class="landing-details" style="margin-top:0;border-top:none;padding-top:0;">${r.same ? 'The target is the same as the cannon origin.' : 'No configuration found: the pearl never comes down to the Target Y level.'}</div></div>`;
+    return;
+  }
+  const top = rank.list[0], sel = SELECTIONS[top.selIndex];
+  const rom = romString(top.selIndex, top.L, top.R);
+  const warns = [];
+  if (top.over) warns.push(r.maxTNT < 2 * MAX_PER_SIDE ? `This target is beyond what ${r.maxTNT} TNT can reach. The closest options are shown.` : `This target is beyond what the cannon can reach (1929 TNT per side). The closest options are shown.`);
+  else if (rank.bestErr > r.maxOffset + 1e-9) warns.push(`Nothing lands within ${r.maxOffset} blocks of the target. The closest options are shown.`);
+  else if (rank.accepted === 1) warns.push(`Only one configuration lands within ${r.maxOffset} blocks, so the priority has nothing to choose between.`);
+
+  let stopperHTML = '';
+  if (!full) {
+    const st = stopperInfo(top);
+    if (st) {
+      const tight = st.close.margin < 0.05 ? ' (tight, but the prediction is exact)' : '';
+      stopperHTML = `
+        <br>Stopper block (closest after the landing): <b>${blockFmt(st.close, yApprox)}</b> <span class="error-text">margin ${st.close.margin.toFixed(3)} blocks${tight}</span>`;
+    }
+  }
+
+  out.innerHTML = `
+    <div class="card">
+      <p class="panel-label">TNT counts &dash; ${full ? 'Full trajectory' : 'Stopper block'}</p>
+      <div class="facing-banner">
+        <div class="flabel">Axis selection</div>
+        <div class="fvalue">${sel.name} <span>&dash; launches ${sel.sector}</span></div>
+      </div>
+      <div class="load-times">
+        <div class="load-card">
+          <div class="axis">Left duper array</div>
+          <div class="time">${top.L}<span> TNT</span></div>
+          <div class="stacks">${arrays(top.L)}</div>
+        </div>
+        <div class="load-card">
+          <div class="axis">Right duper array</div>
+          <div class="time">${top.R}<span> TNT</span></div>
+          <div class="stacks">${arrays(top.R)}</div>
+        </div>
+      </div>
+      <div class="landing-details">
+        <small class="error-text" style="margin:0;">ROM pins (<span class="pins-left">left</span> &dash; <span class="pins-right">right</span> &dash; <span class="pins-axis">axis</span>)</small>
+        <div class="rom">${pinsHTML(rom)}</div>
+        Flight time: <b>${top.K} ticks</b> <span class="error-text">(${(top.K / 20).toFixed(2)} s)</span>
+        <br>Predicted landing: <b>${posFmt(top, yApprox)}</b>${stopperHTML}
+        <br><span class="error-text">Offset from target: <b>~${top.err.toFixed(1)} blocks</b></span>
+        <br>Total TNT: <b>${top.n}</b> <span class="error-text">of ${r.maxTNT}</span>
+        ${warns.map(w => `<div class="warn-text">${w}</div>`).join('')}
+      </div>
+      ${rankHTML(rank, full, yApprox)}
+    </div>
+  `;
+}
+</script>
+</body>
+</html>
